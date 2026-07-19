@@ -1,0 +1,18 @@
+# Garmin Connect IQ build output
+bin/
+*.prg
+*.iq
+
+# Developer keys (Sensitive private keys)
+developer_key.der
+developer_key.pem
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.settings/
+.project
+.metadata/
+.vscode/
