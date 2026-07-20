@@ -87,7 +87,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
     function initialize() {
         WatchFace.initialize();
         mFontNum = Graphics.FONT_NUMBER_THAI_HOT;
-        mFontDate = Graphics.FONT_XTINY; // 使用超極小字型來顯示日期、日出落與電量/心率步數
+        mFontDate = Graphics.FONT_TINY; // 使用極小字型取代 XTINY，筆畫更清晰以解決 MIP 螢幕模糊不清楚的問題
         mFontSec = Graphics.FONT_SMALL; // 秒數字型再大一個級別
 
         // 1. 反射查詢一次性快取 (極致省電)
