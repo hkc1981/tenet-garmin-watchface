@@ -27,6 +27,7 @@
             palette to update permissions.
         -->
         <iq:permissions>
+            <iq:uses-permission id="Positioning"/>
         </iq:permissions>
 
         <!--
