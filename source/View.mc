@@ -13,6 +13,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
     private var mFontNum as FontDefinition;
     private var mFontDate as FontDefinition;
     private var mFontSec as FontDefinition;
+    private var mFontSun as FontDefinition;
     private var mHourHeight as Number = 0;
     private var mDateHeight as Number = 0;
     private var mYPos as Number = 0;
@@ -89,6 +90,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         mFontNum = Graphics.FONT_NUMBER_THAI_HOT;
         mFontDate = Graphics.FONT_TINY; // 使用極小字型取代 XTINY，筆畫更清晰以解決 MIP 螢幕模糊不清楚的問題
         mFontSec = Graphics.FONT_LARGE; // 秒數字型再大一個級別，使用 FONT_LARGE 取代 MEDIUM
+        mFontSun = Graphics.FONT_XTINY; // 日出日落改回 FONT_XTINY 小字型以維持精緻度
 
         // 1. 反射查詢一次性快取 (極致省電)
         mHasWeather = (Toybox has :Weather);
@@ -138,8 +140,8 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         mDateHeight = dc.getFontHeight(mFontDate);
         mDateY = mYPos - 5; // 往上微調 3 像素
 
-        // 日出落 Y 軸坐標：放在日期上方，去掉 3 像素減法以補償日期上移，使日出落 (SR/SS) 坐標保持原位不變！
-        mSunY = mDateY - mDateHeight;
+        // 日出落 Y 軸坐標：放在日期上方，根據其本身的 FONT_XTINY 高度與 3 像素間隙動態計算
+        mSunY = mDateY - dc.getFontHeight(mFontSun) - 3;
 
         // 電量 Y 軸坐標：放在時分下方。由於 FONT_NUMBER_THAI_HOT 底部同樣自帶巨大的空白 Padding，
         // 為了在視覺上讓電量與時分底部相隔 3 像素，我們需要使用負向間距修正 (往上偏移 18 像素)。
@@ -237,6 +239,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         var fontDate = mFontDate;
         var fontNum = mFontNum;
         var fontSec = mFontSec;
+        var fontSun = mFontSun;
         var yPos = mYPos;
         var secY = mSecY;
         var pipeY1 = mPipeY1;
@@ -480,7 +483,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         dc.setColor(colorDarkGray, colorTransparent);
 
         // 1. 繪製日出落時間
-        dc.drawText(screenCenterX, sunY, fontDate, sunStr, justifyCenter);
+        dc.drawText(screenCenterX, sunY, fontSun, sunStr, justifyCenter);
 
         // 2. 繪製日期
         dc.drawText(screenCenterX, dateY, fontDate, dateStr, justifyCenter);
