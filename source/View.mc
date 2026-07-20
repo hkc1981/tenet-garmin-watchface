@@ -136,10 +136,10 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         // 日期 Y 軸坐標：由於 FONT_NUMBER_THAI_HOT 字型本身頂部包含大約 20 像素的空白 (Padding)，
         // 若要讓日期與時間大字在視覺上貼近 3 像素，必須將日期繪製坐標下移至大字型空白區內 (mYPos - 2 像素)。
         mDateHeight = dc.getFontHeight(mFontDate);
-        mDateY = mYPos - 2;
+        mDateY = mYPos - 5; // 往上微調 3 像素
 
-        // 日出落 Y 軸坐標：放在日期上方，其視覺間距與日期到時分的間距相同 (即 3 像素偏移)。
-        mSunY = mDateY - mDateHeight - 3;
+        // 日出落 Y 軸坐標：放在日期上方，去掉 3 像素減法以補償日期上移，使日出落 (SR/SS) 坐標保持原位不變！
+        mSunY = mDateY - mDateHeight;
 
         // 電量 Y 軸坐標：放在時分下方。由於 FONT_NUMBER_THAI_HOT 底部同樣自帶巨大的空白 Padding，
         // 為了在視覺上讓電量與時分底部相隔 3 像素，我們需要使用負向間距修正 (往上偏移 18 像素)。
