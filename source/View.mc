@@ -88,7 +88,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         WatchFace.initialize();
         mFontNum = Graphics.FONT_NUMBER_THAI_HOT;
         mFontDate = Graphics.FONT_TINY; // 使用極小字型取代 XTINY，筆畫更清晰以解決 MIP 螢幕模糊不清楚的問題
-        mFontSec = Graphics.FONT_SMALL; // 秒數字型再大一個級別
+        mFontSec = Graphics.FONT_MEDIUM; // 秒數字型再大一個級別，使用 FONT_MEDIUM 取代 SMALL
 
         // 1. 反射查詢一次性快取 (極致省電)
         mHasWeather = (Toybox has :Weather);
