@@ -149,7 +149,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
 
         // 直豎線 Y 軸起訖坐標：與 FONT_XTINY 電量文字高度視覺對齊 (保留上下各 4 像素 the Padding 以符合字元高度)
         mPipeY1 = mBatteryY + 4;
-        mPipeY2 = mBatteryY + mDateHeight - 4;
+        mPipeY2 = mBatteryY + dc.getFontHeight(mFontSun) - 4;
 
         // 秒數 Y 軸坐標：將秒數的頂端往上微調 3 像素。
         mSecY = mBatteryY - 3;
@@ -489,13 +489,13 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         dc.drawText(screenCenterX, dateY, fontDate, dateStr, justifyCenter);
 
         // 3. 繪製電量與天數
-        dc.drawText(batteryX, batteryY, fontDate, batteryStr, justifyLeft);
+        dc.drawText(batteryX, batteryY, fontSun, batteryStr, justifyLeft);
 
         // 4. 手繪第一條深灰色直豎線 (線寬 1 像素，置於電量文字裝飾)
         dc.drawLine(pipeX, pipeY1, pipeX, pipeY2);
 
         // 5. 繪製心率與步數
-        dc.drawText(hrStepsX, batteryY, fontDate, hrStepsStr, justifyLeft);
+        dc.drawText(hrStepsX, batteryY, fontSun, hrStepsStr, justifyLeft);
 
         // 只有在高功耗亮屏模式下，才由 onUpdate 繪製第二條直豎線與秒數作為 Fallback 防護
         if (!mInLowPower) {
