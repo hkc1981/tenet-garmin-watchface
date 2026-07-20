@@ -145,7 +145,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
 
         // 電量 Y 軸坐標：放在時分下方。由於 FONT_NUMBER_THAI_HOT 底部同樣自帶巨大的空白 Padding，
         // 為了在視覺上讓電量與時分底部相隔 3 像素，我們需要使用負向間距修正 (往上偏移 18 像素)。
-        mBatteryY = mYPos + mHourHeight - 18;
+        mBatteryY = mYPos + mHourHeight - 21; // 往上移動 3 像素
 
         // 直豎線 Y 軸起訖坐標：與 FONT_XTINY 電量文字高度視覺對齊 (保留上下各 4 像素 the Padding 以符合字元高度)
         mPipeY1 = mBatteryY + 4;
@@ -329,7 +329,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             if (info != null) {
                 steps = info.steps;
             }
-            mLastSteps = (steps != null) ? steps : -1;
+            mLastSteps = 99999; // 暫時 hardcode 為 99999 以便測試寬度佈局
 
             // 快取步數字串，消滅每兩秒因為心率跳動而重複執行的 steps.toString() 記憶體分配與 GC 開銷！
             mStepsStr = (mLastSteps != -1) ? mLastSteps.toString() : "--";
