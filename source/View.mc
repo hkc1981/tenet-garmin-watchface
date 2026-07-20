@@ -91,7 +91,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         WatchFace.initialize();
         mFontNum = Graphics.FONT_NUMBER_THAI_HOT;
         mFontDate = Graphics.FONT_XTINY; // 使用超極小字型來顯示日期與 status 數據，恢復精緻極簡美感
-        mFontSec = Graphics.FONT_LARGE; // 秒數字型再大一個級別，使用 FONT_LARGE 取代 MEDIUM
+        mFontSec = Graphics.FONT_MEDIUM; // 使用 FONT_MEDIUM 作為秒數字型，以防 FONT_LARGE 渲染功耗超標導致 1Hz 局部更新被系統禁用
         mFontSun = Graphics.FONT_XTINY; // 日出日落與輔助資訊統一使用超極小字型 FONT_XTINY
 
         // 1. 反射查詢一次性快取 (極致省電)
@@ -331,7 +331,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             if (info != null) {
                 steps = info.steps;
             }
-            mLastSteps = 99999; // 暫時 hardcode 為 99999 以便測試寬度佈局
+            mLastSteps = (steps != null) ? steps : -1;
 
             // 快取步數字串，消滅每兩秒因為心率跳動而重複執行的 steps.toString() 記憶體分配與 GC 開銷！
             mStepsStr = (mLastSteps != -1) ? mLastSteps.toString() : "--";
