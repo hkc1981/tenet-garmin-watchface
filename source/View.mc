@@ -26,8 +26,6 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
     private var mColonWidth as Number = 0;
     private var mDotOffset as Number = 0;
     private static const mGap = 15;
-    private static const DAYS_OF_WEEK = ["", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as Array<String>;
-    private static const MONTHS = ["", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"] as Array<String>;
     private var mScreenCenterX as Number = 0;
 
     // 2. 圓點大冒號的左上角 X, Y 坐標快取 (消滅 onUpdate 中的每秒加減法算術運算)
@@ -363,10 +361,10 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             // 【原子優化 4：消滅 Lang.format 陣列分配與 toUpper 複製】
             // 系統 FORMAT_MEDIUM 返回的日期/月份已是大寫，我們以直接字串拼接 (+) 取代 Lang.format，
             // 彻底消滅了 Lang.format 解譯與 3 元素 Array 在 Heap 的動態配置與 GC。
-            var today = Time.Gregorian.info(nowMoment, Time.FORMAT_SHORT);
+            var today = Time.Gregorian.info(nowMoment, Time.FORMAT_MEDIUM);
             mLastDay = today.day;
-            // 快取日期字串：強制轉換為大寫英文格式 (如 MON, JUL 20)，以與手錶原生錶面保持一致，並消滅本地化翻譯開銷！
-            mDateStr = DAYS_OF_WEEK[today.day_of_week] + ", " + MONTHS[today.month] + " " + today.day;
+            // 使用原汁原味的系統內建日期格式
+            mDateStr = today.day_of_week + ", " + today.month + " " + today.day;
 
             // 讀取氣象與更新
             mSunStr = "SR: --:--  SS: --:--";
