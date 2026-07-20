@@ -26,6 +26,8 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
     private var mColonWidth as Number = 0;
     private var mDotOffset as Number = 0;
     private static const mGap = 15;
+    private static const DAYS_OF_WEEK = ["", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as Array<String>;
+    private static const MONTHS = ["", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"] as Array<String>;
     private var mScreenCenterX as Number = 0;
 
     // 2. 圓點大冒號的左上角 X, Y 坐標快取 (消滅 onUpdate 中的每秒加減法算術運算)
@@ -367,9 +369,9 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             
             if (currentDayIndex != mLastDay) {
                 mLastDay = currentDayIndex;
-                var today = Time.Gregorian.info(nowMoment, Time.FORMAT_MEDIUM);
-                // 使用原汁原味的系統內建日期格式
-                mDateStr = today.day_of_week + ", " + today.month + " " + today.day;
+                var today = Time.Gregorian.info(nowMoment, Time.FORMAT_SHORT);
+                // 使用大寫英文對照表拼接日期，解決 FONT_XTINY 系統字型不支援中文字元造成的豆腐塊破字 Bug！
+                mDateStr = DAYS_OF_WEEK[today.day_of_week] + ", " + MONTHS[today.month] + " " + today.day;
             }
 
             // 讀取氣象與更新
