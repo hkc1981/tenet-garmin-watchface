@@ -361,10 +361,16 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             // 【原子優化 4：消滅 Lang.format 陣列分配與 toUpper 複製】
             // 系統 FORMAT_MEDIUM 返回的日期/月份已是大寫，我們以直接字串拼接 (+) 取代 Lang.format，
             // 彻底消滅了 Lang.format 解譯與 3 元素 Array 在 Heap 的動態配置與 GC。
-            var today = Time.Gregorian.info(nowMoment, Time.FORMAT_MEDIUM);
-            mLastDay = today.day;
-            // 使用原汁原味的系統內建日期格式
-            mDateStr = today.day_of_week + ", " + today.month + " " + today.day;
+            // 讀取本地天數索引，消滅每日除一次外的 Gregorian.info 系統呼叫與字串拼接
+            var localTimeSec = nowMoment.value() + clockTime.timeZoneOffset;
+            var currentDayIndex = localTimeSec / 86400;
+            
+            if (currentDayIndex != mLastDay) {
+                mLastDay = currentDayIndex;
+                var today = Time.Gregorian.info(nowMoment, Time.FORMAT_MEDIUM);
+                // 使用原汁原味的系統內建日期格式
+                mDateStr = today.day_of_week + ", " + today.month + " " + today.day;
+            }
 
             // 讀取氣象與更新
             mSunStr = "SR: --:--  SS: --:--";
