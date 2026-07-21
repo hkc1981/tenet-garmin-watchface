@@ -182,10 +182,6 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
     // 【終極省電核心 1】實作 1Hz 局部更新 (Partial Update)
     // 透過引進 Local Variable Caching 與位元運算，將每秒局部刷新的 VM 執行時間壓縮至 0.2 毫秒！
     function onPartialUpdate(dc as Dc) as Void {
-        // 若處於睡眠低功耗模式，直接返回
-        if (mInLowPower) {
-            return;
-        }
         mHasPartialUpdateRun = true;
 
         var sec = System.getClockTime().sec;
@@ -443,26 +439,18 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             var batteryWidth = mBatteryWidth;
             var hrStepsWidth = mHrStepsWidth;
 
-            if (mInLowPower) {
-                // 低功耗模式下：無第二個豎線與秒數。總寬度 = 電量寬 + 5 + 1 + 5 + 心率步數寬
-                var totalBottomWidth = batteryWidth + 11 + hrStepsWidth;
-                mBatteryX = (screenCenterX * 2 - totalBottomWidth) / 2;
-                mPipeX = mBatteryX + batteryWidth + 5;
-                mHrStepsX = mPipeX + 6;
-            } else {
-                // 高功耗亮屏模式下：包含秒數。總寬度 = 電量寬 + 5 + 1 + 5 + 心率步數寬 + 5 + 1 + 8 + 秒數寬
-                mLastSec = sec;
-                mSecStr = preAllocatedStrings[sec]; // 查表取得秒字串，零記憶體分配
-                
-                var secWidth = mSecWidth; // 直接套用在 onLayout 中快取的秒數固定寬度，消滅此處的 API 呼叫！
-                var totalBottomWidth = batteryWidth + 11 + hrStepsWidth + 14 + secWidth;
+            // 不分低功耗或亮屏，排版寬度與定位一律包含秒數與第二個裝飾豎線，保持畫面恆定不動，秒數永不消失
+            mLastSec = sec;
+            mSecStr = preAllocatedStrings[sec]; // 查表取得秒字串，零記憶體分配
+            
+            var secWidth = mSecWidth; // 直接套用在 onLayout 中快取的秒數固定寬度，消滅此處的 API 呼叫！
+            var totalBottomWidth = batteryWidth + 11 + hrStepsWidth + 14 + secWidth;
 
-                mBatteryX = (screenCenterX * 2 - totalBottomWidth) / 2;
-                mPipeX = mBatteryX + batteryWidth + 5;
-                mHrStepsX = mPipeX + 6;
-                mPipe2X = mHrStepsX + hrStepsWidth + 5;
-                mSecX = mPipe2X + 9;
-            }
+            mBatteryX = (screenCenterX * 2 - totalBottomWidth) / 2;
+            mPipeX = mBatteryX + batteryWidth + 5;
+            mHrStepsX = mPipeX + 6;
+            mPipe2X = mHrStepsX + hrStepsWidth + 5;
+            mSecX = mPipe2X + 9;
         }
 
         // 將需要被繪製的資料也全部快取至區域變數，實行終極 Local Caching
@@ -506,16 +494,11 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         // 5. 繪製心率與步數
         dc.drawText(hrStepsX, batteryY, fontSun, hrStepsStr, justifyLeft);
 
-        // 只有在高功耗亮屏模式下，才由 onUpdate 繪製第二條直豎線與秒數作為 Fallback 防護
-        if (!mInLowPower) {
-            // 6. 手繪第二條深灰色直豎線
-            dc.drawLine(pipe2X, pipeY1, pipe2X, pipeY2);
+        // 6. 手繪第二條深灰色直豎線
+        dc.drawLine(pipe2X, pipeY1, pipe2X, pipeY2);
 
-            // Fallback：如果系統沒有成功呼叫 onPartialUpdate，則由 onUpdate 直接畫出秒數以確保相容性
-            if (!mHasPartialUpdateRun) {
-                dc.drawText(secX, secY, fontSec, secStr, justifyLeft);
-            }
-        }
+        // 7. 繪製秒數 (不論睡眠還是亮屏，onUpdate 都在全屏刷新時畫出當前秒數，隨後每秒由 onPartialUpdate 接管局部刷新)
+        dc.drawText(secX, secY, fontSec, secStr, justifyLeft);
 
         // ================= 繪製第二組：紅色時間大字 =================
         dc.setColor(colorRed, colorTransparent);
