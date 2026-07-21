@@ -254,6 +254,13 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         var preAllocatedStrings = mPreAllocatedStrings;
         var preAllocatedHRStrings = mPreAllocatedHRStrings;
 
+        // 快取全域模組引用 (消滅 draw 區塊內所有對 Toybox 命名空間的尋找開銷，轉為極速的暫存器讀取！)
+        var systemModule = System;
+        var activityModule = Activity;
+        var activityMonitorModule = ActivityMonitor;
+        var weatherModule = Weather;
+        var timeModule = Time;
+
         // 快取全域 Graphics 列舉常數 (防止 VM 尋找 Graphics 命名空間)
         var colorDarkGray = Graphics.COLOR_DK_GRAY;
         var colorRed = Graphics.COLOR_RED;
@@ -266,7 +273,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         dc.clear();
 
         // 取得當前時間
-        var clockTime = System.getClockTime();
+        var clockTime = systemModule.getClockTime();
         var hour = clockTime.hour;
         var min = clockTime.min;
         var sec = 0;
@@ -284,13 +291,13 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         // 獲取當前心率
         if (!mInLowPower) {
             // 【原子優化 1：消滅重複心率查詢】
-            // 如果剛好是 onPartialUpdate 觸發了 requestUpdate()，直接套用已取得的 mPendingHR，完全跳過重複的 API 呼叫！
+            // 如果剛好是 onPartialUpdate 觸發了 requestUpdate()，直接套用已取得 of mPendingHR，完全跳過重複的 API 呼叫！
             var pendingHR = mPendingHR;
             if (pendingHR != -1) {
                 hr = pendingHR;
                 mPendingHR = -1; // 消耗掉快取
             } else {
-                var activityInfo = Activity.getActivityInfo();
+                var activityInfo = activityModule.getActivityInfo();
                 if (activityInfo != null) {
                     hr = activityInfo.currentHeartRate;
                 }
@@ -298,10 +305,10 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             
             // 心率歷史紀錄 fallback 只在跨分或初始時才防護，徹底消滅每秒 Flash 讀寫損耗
             if (hr == null && isMinChanged) {
-                var hrHistory = ActivityMonitor.getHeartRateHistory(1, true);
+                var hrHistory = activityMonitorModule.getHeartRateHistory(1, true);
                 if (hrHistory != null) {
                     var hrSample = hrHistory.next();
-                    if (hrSample != null && hrSample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) {
+                    if (hrSample != null && hrSample.heartRate != activityMonitorModule.INVALID_HR_SAMPLE) {
                         hr = hrSample.heartRate;
                     }
                 }
@@ -318,16 +325,16 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         if (isMinChanged) {
             // 【原子優化 2：單次 Time.now() 快取】
             // 一分鐘只取得一次 Moment，傳遞給 Gregorian 與 Weather，消滅重複系統呼叫
-            var nowMoment = Time.now();
+            var nowMoment = timeModule.now();
 
             // 讀取電量 (移除 Math.round 浮點運算，直接轉型)
-            var stats = System.getSystemStats();
+            var stats = systemModule.getSystemStats();
             var battery = stats.battery.toNumber();
             var batteryInDays = stats.batteryInDays;
 
             // 讀取步數
             var steps = null;
-            var info = ActivityMonitor.getInfo();
+            var info = activityMonitorModule.getInfo();
             if (info != null) {
                 steps = info.steps;
             }
@@ -339,15 +346,15 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             // 【原子優化 3：低功耗睡眠模式分級更新心率】
             // 睡眠模式下，一分鐘也在跨分區僅讀一次心率，既省電又兼顧心率時效性
             if (mInLowPower) {
-                var activityInfo = Activity.getActivityInfo();
+                var activityInfo = activityModule.getActivityInfo();
                 if (activityInfo != null) {
                     hr = activityInfo.currentHeartRate;
                 }
                 if (hr == null) {
-                    var hrHistory = ActivityMonitor.getHeartRateHistory(1, true);
+                    var hrHistory = activityMonitorModule.getHeartRateHistory(1, true);
                     if (hrHistory != null) {
                         var hrSample = hrHistory.next();
-                        if (hrSample != null && hrSample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) {
+                        if (hrSample != null && hrSample.heartRate != activityMonitorModule.INVALID_HR_SAMPLE) {
                             hr = hrSample.heartRate;
                         }
                     }
@@ -367,32 +374,35 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             var localTimeSec = nowMoment.value() + clockTime.timeZoneOffset;
             var currentDayIndex = localTimeSec / 86400;
             
-            if (currentDayIndex != mLastDay) {
+            var isDayChanged = (currentDayIndex != mLastDay);
+            if (isDayChanged) {
                 mLastDay = currentDayIndex;
-                var today = Time.Gregorian.info(nowMoment, Time.FORMAT_SHORT);
+                var today = timeModule.Gregorian.info(nowMoment, timeModule.FORMAT_SHORT);
                 // 使用大寫英文對照表拼接日期，解決 FONT_XTINY 系統字型不支援中文字元造成的豆腐塊破字 Bug！
                 mDateStr = DAYS_OF_WEEK[today.day_of_week] + ", " + MONTHS[today.month] + " " + today.day;
             }
 
             // 讀取氣象與更新
-            mSunStr = "SR: --:--  SS: --:--";
-            if (mHasWeather) {
-                var conditions = Weather.getCurrentConditions();
-                if (conditions != null) {
-                    var location = conditions.observationLocationPosition;
-                    if (location != null) {
-                        var sunrise = Weather.getSunrise(location, nowMoment);
-                        var sunset = Weather.getSunset(location, nowMoment);
-                        if (sunrise != null && sunset != null) {
-                            var sunriseInfo = Time.Gregorian.info(sunrise, Time.FORMAT_SHORT);
-                            var sunsetInfo = Time.Gregorian.info(sunset, Time.FORMAT_SHORT);
-                            var srH = sunriseInfo.hour;
-                            var srM = sunriseInfo.min;
-                            var ssH = sunsetInfo.hour;
-                            var ssM = sunsetInfo.min;
-                            if (srH >= 0 && srH < 60 && srM >= 0 && srM < 60 && ssH >= 0 && ssH < 60 && ssM >= 0 && ssM < 60) {
-                                // 【原子優化 5：消滅氣象 Lang.format 4 元素 Array 記憶體分配】
-                                mSunStr = "SR: " + preAllocatedStrings[srH] + ":" + preAllocatedStrings[srM] + "  SS: " + preAllocatedStrings[ssH] + ":" + preAllocatedStrings[ssM];
+            // 自適應降頻優化：只有在跨日 (isDayChanged) 或者目前尚未成功取得資料 (mSunStr 包含 "--:--") 時，才進行高昂的球面三角學運算！
+            if (isDayChanged || mSunStr.equals("SR: --:--  SS: --:--")) {
+                if (mHasWeather) {
+                    var conditions = weatherModule.getCurrentConditions();
+                    if (conditions != null) {
+                        var location = conditions.observationLocationPosition;
+                        if (location != null) {
+                            var sunrise = weatherModule.getSunrise(location, nowMoment);
+                            var sunset = weatherModule.getSunset(location, nowMoment);
+                            if (sunrise != null && sunset != null) {
+                                var sunriseInfo = timeModule.Gregorian.info(sunrise, timeModule.FORMAT_SHORT);
+                                var sunsetInfo = timeModule.Gregorian.info(sunset, timeModule.FORMAT_SHORT);
+                                var srH = sunriseInfo.hour;
+                                var srM = sunriseInfo.min;
+                                var ssH = sunsetInfo.hour;
+                                var ssM = sunsetInfo.min;
+                                if (srH >= 0 && srH < 60 && srM >= 0 && srM < 60 && ssH >= 0 && ssH < 60 && ssM >= 0 && ssM < 60) {
+                                    // 【原子優化 5：消滅氣象 Lang.format 4 元素 Array 記憶體分配】
+                                    mSunStr = "SR: " + preAllocatedStrings[srH] + ":" + preAllocatedStrings[srM] + "  SS: " + preAllocatedStrings[ssH] + ":" + preAllocatedStrings[ssM];
+                                }
                             }
                         }
                     }
