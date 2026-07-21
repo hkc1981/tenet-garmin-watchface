@@ -190,19 +190,6 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
 
         var sec = System.getClockTime().sec;
         
-        // 1. 【心率定時更新之位元運算優化】
-        // 將 (sec % 2 == 0) 改成位元與運算 (sec & 1) == 0。
-        // 這在 VM 中是極速的位元運算，完全免除了除法器（Modulo）的運算開銷！
-        if ((sec & 1) == 0) {
-            var activityInfo = Activity.getActivityInfo();
-            var hr = (activityInfo != null) ? activityInfo.currentHeartRate : null;
-            var cachedHR = (hr != null) ? hr : -1;
-            if (cachedHR != mLastHR) {
-                mPendingHR = cachedHR; // 快取最新心率，傳遞給 onUpdate，消滅同一秒重複查詢的 API 開銷
-                WatchUi.requestUpdate(); // 心率變動才刷新全螢幕
-                return;
-            }
-        }
 
         // 2. 【onPartialUpdate 專屬 Local Variable Caching】
         // 徹底消滅 1Hz 下對類別成員變數的存取查表開銷 (getv)
