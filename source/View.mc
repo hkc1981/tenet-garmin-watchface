@@ -308,6 +308,18 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             }
         }
 
+        // 讀取步數 (自適應降頻更新：亮屏時每兩秒更新一次以支援使用者邊走邊看；睡眠時一分鐘更新一次)
+        if (isMinChanged || (!mInLowPower && (sec & 1) == 0)) {
+            var info = activityMonitorModule.getInfo();
+            if (info != null) {
+                var currentSteps = info.steps;
+                if (currentSteps != mLastSteps) {
+                    mLastSteps = (currentSteps != null) ? currentSteps : -1;
+                    mStepsStr = (mLastSteps != -1) ? mLastSteps.toString() : "--";
+                }
+            }
+        }
+
         // 1. 【跨分更新區 (一分鐘僅執行一次)】徹底與 1Hz 循環隔離，免除高頻呼叫與記憶體分配！
         if (isMinChanged) {
             // 【原子優化 2：單次 Time.now() 快取】
@@ -319,16 +331,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             var battery = stats.battery.toNumber();
             var batteryInDays = stats.batteryInDays;
 
-            // 讀取步數
-            var steps = null;
-            var info = activityMonitorModule.getInfo();
-            if (info != null) {
-                steps = info.steps;
-            }
-            mLastSteps = (steps != null) ? steps : -1;
 
-            // 快取步數字串，消滅每兩秒因為心率跳動而重複執行的 steps.toString() 記憶體分配與 GC 開銷！
-            mStepsStr = (mLastSteps != -1) ? mLastSteps.toString() : "--";
 
             // 【原子優化 3：低功耗睡眠模式分級更新心率】
             // 睡眠模式下，一分鐘也在跨分區僅讀一次心率，既省電又兼顧心率時效性
