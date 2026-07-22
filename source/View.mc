@@ -259,10 +259,9 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
         var clockTime = systemModule.getClockTime();
         var hour = clockTime.hour;
         var min = clockTime.min;
-        var sec = 0;
-        if (!mInLowPower) {
-            sec = clockTime.sec;
-        }
+        var sec = clockTime.sec;
+        mLastSec = sec;
+        mSecStr = preAllocatedStrings[sec];
 
         // 【髒標記控制 (Dirty Flags)】以細粒度狀態追蹤
         var isMinChanged = (min != mLastMin || mLastDay == -1);
@@ -439,9 +438,7 @@ class tenetWatchFaceView extends WatchUi.WatchFace {
             var batteryWidth = mBatteryWidth;
             var hrStepsWidth = mHrStepsWidth;
 
-            // 不分低功耗或亮屏，排版寬度與定位一律包含秒數與第二個裝飾豎線，保持畫面恆定不動，秒數永不消失
-            mLastSec = sec;
-            mSecStr = preAllocatedStrings[sec]; // 查表取得秒字串，零記憶體分配
+
             
             var secWidth = mSecWidth; // 直接套用在 onLayout 中快取的秒數固定寬度，消滅此處的 API 呼叫！
             var totalBottomWidth = batteryWidth + 11 + hrStepsWidth + 14 + secWidth;
